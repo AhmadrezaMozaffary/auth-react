@@ -1,10 +1,13 @@
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
+import AuthContext from "../../store/auth-context";
 
 import classes from "./AuthForm.module.css";
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  const authCtx = useContext(AuthContext);
 
   const emailInputRef = useRef();
   const passInputRef = useRef();
@@ -21,37 +24,44 @@ const AuthForm = () => {
 
     //Validation
 
+    //Handling SignUp/Login
     setIsLoading(true);
+    let API_ENDPOINT = "";
+    let REQ_CONFIG = {
+      method: "POST",
+      body: JSON.stringify({
+        email: enteredEmail,
+        password: enteredPass,
+        returnSecureToken: true,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    //SingIn
     if (isLogin) {
-      //SingIn
+      API_ENDPOINT =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCVuS-4utNVuO0tIqxr5nId49eLp8oX8Gk";
     }
 
+    //SingUp
     if (!isLogin) {
-      //SingUp
-      fetch(
-        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCVuS-4utNVuO0tIqxr5nId49eLp8oX8Gk",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            email: enteredEmail,
-            password: enteredPass,
-            returnSecureToken: true,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      )
-        .then((res) => {
-          setIsLoading(false);
-          if (!res.ok) throw new Error("Authentication Failed!");
-          return res?.json();
-        })
-        .then((data) => {
-          console.log(data);
-        })
-        .catch((err) => alert(err));
+      API_ENDPOINT =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCVuS-4utNVuO0tIqxr5nId49eLp8oX8Gk";
     }
+
+    fetch(API_ENDPOINT, REQ_CONFIG)
+      .then((res) => {
+        setIsLoading(false);
+
+        if (!res.ok) throw new Error("Authentication Failed!");
+        return res?.json();
+      })
+      .then((data) => {
+        authCtx.login(data.idToken);
+      })
+      .catch((err) => alert(err));
   };
 
   return (
